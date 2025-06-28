@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Users } from 'lucide-react';
 import DashboardNav from './DashboardNav';
-import { students } from './mockData';
 import { TextShimmer } from '@/components/ui/text-shimmer';
+import axios from 'axios';
 
 const StudentCard: React.FC<{ student: any }> = ({ student }) => (
   <div className="student-card">
@@ -12,10 +12,8 @@ const StudentCard: React.FC<{ student: any }> = ({ student }) => (
     <div className="student-info">
       <h3 className="student-name">{student.name}</h3>
       <p className="student-email">{student.email}</p>
-      <div className="student-status-container">
-        <span className={`status-badge status-${student.status}`}>
-          {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-        </span>
+      <div className="student-xp-container">
+        <span className="xp-badge">XP: {student.xp}</span>
       </div>
     </div>
   </div>
@@ -24,12 +22,34 @@ const StudentCard: React.FC<{ student: any }> = ({ student }) => (
 const Students: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [students, setStudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await axios.get('http://localhost:5001/api/students/leaderboard');
+        setStudents(res.data);
+      } catch (err) {
+        setError('Failed to fetch students.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  // Table view: sort by xp descending
+  const sortedStudents = [...filteredStudents].sort((a, b) => b.xp - a.xp);
 
   return (
     <>
@@ -83,11 +103,15 @@ const Students: React.FC = () => {
             {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} found
           </div>
 
-          {filteredStudents.length > 0 ? (
+          {loading ? (
+            <div className="no-students">Loading...</div>
+          ) : error ? (
+            <div className="no-students">{error}</div>
+          ) : filteredStudents.length > 0 ? (
             viewMode === 'cards' ? (
               <div className="students-list">
                 {filteredStudents.map((student) => (
-                  <StudentCard key={student.id} student={student} />
+                  <StudentCard key={student._id || student.id} student={student} />
                 ))}
               </div>
             ) : (
@@ -96,19 +120,15 @@ const Students: React.FC = () => {
                   <tr>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Status</th>
+                    <th>XP</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.map(student => (
-                    <tr key={student.id}>
+                  {sortedStudents.map(student => (
+                    <tr key={student._id || student.id}>
                       <td style={{ fontWeight: 500 }}>{student.name}</td>
                       <td style={{ color: '#6b7280' }}>{student.email}</td>
-                      <td>
-                        <span className={`status-badge status-${student.status}`}>
-                          {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                        </span>
-                      </td>
+                      <td style={{ color: '#6366f1', fontWeight: 600 }}>{student.xp}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -251,28 +271,18 @@ const Students: React.FC = () => {
           font-size: 0.875rem;
           margin: 0 0 0.5rem 0;
         }
-        .student-status-container {
+        .student-xp-container {
           display: flex;
           align-items: center;
         }
-        .status-badge {
+        .xp-badge {
           display: inline-block;
           padding: 4px 12px;
           border-radius: 12px;
           font-size: 13px;
           font-weight: 600;
-        }
-        .status-active {
-          background: #e0f7fa;
-          color: #00796b;
-        }
-        .status-pending {
-          background: #fff3cd;
-          color: #856404;
-        }
-        .status-inactive {
-          background: #f8d7da;
-          color: #842029;
+          background: #e0e7ff;
+          color: #3730a3;
         }
         .students-table {
           width: 100%;
