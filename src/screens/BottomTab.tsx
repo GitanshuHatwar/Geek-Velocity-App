@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import React from "react";
 import { Map, PawPrint, Trophy, ShoppingBag } from "lucide-react";
 
 export function BottomTabNav() {

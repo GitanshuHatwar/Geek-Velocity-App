@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ClassroomDetails from './pages/ClassroomDetails';
@@ -14,6 +14,7 @@ import GamifiedQuizScreen from './screens/student/QuizScreen';
 import PetSelector from './screens/student/PetSelector';
 import Onboarding from './screens/student/Onboarding';
 import EdumonApp from './screens/student/Edumon';
+
 // Type assertions for JSX files
 const OnboardingComponent = Onboarding as React.ComponentType;
 const QuestDetailComponent = QuestDetailScreen as React.ComponentType;
