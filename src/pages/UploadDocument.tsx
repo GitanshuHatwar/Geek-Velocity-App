@@ -54,8 +54,23 @@ const UploadDocument: React.FC = () => {
     setIsUploading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // First, upload the file to the backend
+      const formData = new FormData();
+      formData.append('file', selectedFile);
 
+      const uploadResponse = await fetch('http://localhost:5001/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('File upload failed');
+      }
+
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create document record for local storage
       const newDocument: UploadedDocument = {
         id: Date.now(),
         type: uploadType as "video" | "pdf" | "doc" | "image" | "other",
@@ -67,10 +82,12 @@ const UploadDocument: React.FC = () => {
         classroomId: Number(id)
       };
 
+      // Save to localStorage
       const existingDocs = JSON.parse(localStorage.getItem("uploadedDocuments") || "[]");
       const updatedDocs = [...existingDocs, newDocument];
       localStorage.setItem("uploadedDocuments", JSON.stringify(updatedDocs));
 
+      alert('File uploaded successfully!');
       navigate(`/classroom/${id}`);
     } catch (error) {
       console.error("Upload failed:", error);
