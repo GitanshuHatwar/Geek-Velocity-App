@@ -7,13 +7,13 @@ import CreateClass from './pages/CreateClass';
 import Students from './pages/Students';
 import Profile from './pages/Profile';
 import UploadDocument from './pages/UploadDocument';
-import EnterCodeScreen from './screens/student/BeginScreen.tsx';
-import OptimizedCosmicMap from './screens/student/LevelMapScreen.tsx';
-import QuestDetailScreen from './screens/student/QuestDetailScreen.jsx';
-import GamifiedQuizScreen from './screens/student/QuizScreen.jsx';
-import PetSelector from './screens/student/PetSelector.tsx';
-import Onboarding from './screens/student/Onboarding.jsx';
-import EdumonApp from './screens/student/Edumon.tsx';
+import EnterCodeScreen from './screens/student/BeginScreen';
+import OptimizedCosmicMap from './screens/student/LevelMapScreen';
+import QuestDetailScreen from './screens/student/QuestDetailScreen';
+import GamifiedQuizScreen from './screens/student/QuizScreen';
+import PetSelector from './screens/student/PetSelector';
+import Onboarding from './screens/student/Onboarding';
+import EdumonApp from './screens/student/Edumon';
 // Type assertions for JSX files
 const OnboardingComponent = Onboarding as React.ComponentType;
 const QuestDetailComponent = QuestDetailScreen as React.ComponentType;
@@ -26,7 +26,7 @@ const AppContent = () => {
             {/* <RouteIndicator /> */}
             <Routes>
                 {/* Default route redirects to login */}
-                <Route path="/" element={<Navigate to="/quiz" replace />} />
+                <Route path="/" element={<Navigate to="/login" replace />} />
                 
                 {/* Login route */}
                 <Route path="/login" element={<Login />} />

@@ -48,7 +48,7 @@ export default function EnterCodeScreen() {
             transition={{ duration: 0.7 }}
         >
             <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/login')}
                 style={{ position: 'absolute', top: 20, right: 20, background: '#fff', color: '#22223b', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
             >
                 Log out
