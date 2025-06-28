@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [role, setRole] = useState<'Teacher' | 'Student'>('Teacher');
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false); // Add loading state
@@ -19,6 +20,12 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 3. Update validation to include name for signup
+    if (mode === 'signup' && !name) {
+      setError('Please enter your full name.');
+      return;
+    }
     if (!email || !password) {
       setError('Please enter both email and password.');
       return;
@@ -30,26 +37,30 @@ const Login: React.FC = () => {
     try {
       if (mode === 'signup') {
         // --- SIGNUP LOGIC ---
+        // 3. Add 'name' to the signup request payload
         const response = await axios.post(`${API_URL}/signup`, {
+          name,
           email,
           password,
           role,
         });
-        console.log(response.data.message); // "User created successfully!"
-        // After successful signup, prompt user to log in
+        console.log(response.data.message);
         alert('Signup successful! Please log in to continue.');
         setMode('login');
+        // Clear fields after successful signup
+        setName('');
+        setEmail('');
+        setPassword('');
 
       } else {
-        // --- LOGIN LOGIC ---
+        // --- LOGIN LOGIC (No changes here) ---
         const response = await axios.post(`${API_URL}/login`, {
           email,
           password,
-          role, // Send role to backend for validation
+          role,
         });
-        console.log(response.data.message); // "Login successful!"
+        console.log(response.data.message);
         
-        // On successful login, navigate based on role
         if (response.data.user.role === 'Student') {
           navigate('/onboarding');
         } else {
@@ -57,17 +68,13 @@ const Login: React.FC = () => {
         }
       }
     } catch (err: any) {
-      // Handle errors from axios
       if (axios.isAxiosError(err) && err.response) {
-        // Set error message from backend response
         setError(err.response.data.message || 'An unexpected error occurred.');
       } else {
-        // Handle other errors (e.g., network error)
         setError('An unexpected error occurred. Please try again.');
       }
       console.error('API call failed:', err);
     } finally {
-      // This will run whether the try block succeeded or failed
       setLoading(false);
     }
   };
@@ -75,6 +82,7 @@ const Login: React.FC = () => {
   const toggleMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
     setError('');
+    setName(''); // 4. Clear name field when toggling
     setEmail('');
     setPassword('');
   };
@@ -94,7 +102,7 @@ const Login: React.FC = () => {
             type="button"
             className={`toggleButton${role === 'Teacher' ? ' toggleButtonSelected' : ''}`}
             onClick={() => setRole('Teacher')}
-            disabled={loading} // Disable when loading
+            disabled={loading}
           >
             Teacher
           </button>
@@ -102,7 +110,7 @@ const Login: React.FC = () => {
             type="button"
             className={`toggleButton${role === 'Student' ? ' toggleButtonSelected' : ''}`}
             onClick={() => setRole('Student')}
-            disabled={loading} // Disable when loading
+            disabled={loading}
           >
             Student
           </button>
@@ -111,6 +119,18 @@ const Login: React.FC = () => {
           {mode === 'login' ? 'Login' : 'Sign Up'} as {role}
         </h2>
         <form onSubmit={handleSubmit} className="login-form-flex">
+          {/* 2. Conditionally render the name input field */}
+          {mode === 'signup' && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="input"
+              autoComplete="name"
+              disabled={loading}
+            />
+          )}
           <input
             type="email"
             placeholder="Email"
@@ -118,7 +138,7 @@ const Login: React.FC = () => {
             onChange={e => setEmail(e.target.value)}
             className="input"
             autoComplete={mode === 'login' ? 'username' : 'email'}
-            disabled={loading} // Disable when loading
+            disabled={loading}
           />
           <input
             type="password"
@@ -127,7 +147,7 @@ const Login: React.FC = () => {
             onChange={e => setPassword(e.target.value)}
             className="input"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            disabled={loading} // Disable when loading
+            disabled={loading}
           />
           {error && <div className="login-error">{error}</div>}
           <button type="submit" className="loginButton" disabled={loading}>
@@ -139,7 +159,7 @@ const Login: React.FC = () => {
             onClick={toggleMode}
             style={{ 
               fontSize: '12px', 
-              color: loading ? '#ccc' : '#666', // Grey out when loading
+              color: loading ? '#ccc' : '#666',
               cursor: loading ? 'default' : 'pointer', 
               textDecoration: 'underline',
               marginTop: '10px',
