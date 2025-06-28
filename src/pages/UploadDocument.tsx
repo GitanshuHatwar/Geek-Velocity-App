@@ -58,7 +58,7 @@ const UploadDocument: React.FC = () => {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const uploadResponse = await fetch('https://game-backend-mgd8.onrender.com/upload', {
+      const uploadResponse = await fetch('http://localhost:5001/upload', {
         method: 'POST',
         body: formData,
       });
