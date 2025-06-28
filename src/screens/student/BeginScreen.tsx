@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/moving-border";
+import { useNavigate } from 'react-router-dom';
 
 export default function EnterCodeScreen() {
     const inputRefs = useRef<Array<HTMLInputElement | null>>([])
@@ -35,6 +36,10 @@ export default function EnterCodeScreen() {
         }
     }
 
+    const handleGoClick = () => {
+        navigate('/level-map')
+    }
+
     return (
         <motion.div
             className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white"
@@ -43,7 +48,7 @@ export default function EnterCodeScreen() {
             transition={{ duration: 0.7 }}
         >
             <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/login')}
                 style={{ position: 'absolute', top: 20, right: 20, background: '#fff', color: '#22223b', border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
             >
                 Log out
@@ -79,7 +84,8 @@ export default function EnterCodeScreen() {
             <div>
             <Button
             borderRadius="10rem"
-            className=" bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800 py-7">
+            className=" bg-white dark:bg-slate-900 text-black dark:text-white border-neutral-200 dark:border-slate-800 py-7"
+            onClick={handleGoClick}>
                 GO!
             </Button>
             </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Users, TrendingUp, User } from 'lucide-react';
+import { Home, Users, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 

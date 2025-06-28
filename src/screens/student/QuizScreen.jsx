@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, RotateCw, Rocket } from 'lucide-react';
 import Alert from "@/components/alert";
 
-// ... (questions array remains the same)
+// Questions array
 const questions = [
     {
         question: 'What is the capital of France?',
@@ -27,8 +27,11 @@ const questions = [
     },
 ]
 
-export default function GamifiedQuizScreen({ onStartQuiz }) {
-    // ... (existing state remains the same)
+export default function GamifiedQuizScreen() {
+    const [current, setCurrent] = useState(0);
+    const [score, setScore] = useState(0);
+    const [selected, setSelected] = useState(null);
+    const [showResult, setShowResult] = useState(false);
 
     const handleRetry = () => {
         setCurrent(0);
@@ -111,7 +114,21 @@ export default function GamifiedQuizScreen({ onStartQuiz }) {
                     transition={{ duration: 2, repeat: Infinity }}
                 />
 
-                {/* Progress bar remains same */}
+                {/* Progress bar */}
+                <div className="mb-6">
+                    <div className="flex justify-between text-sm text-gray-300 mb-2">
+                        <span>Question {current + 1} of {questions.length}</span>
+                        <span>{Math.round(((current + 1) / questions.length) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                        <motion.div
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${((current + 1) / questions.length) * 100}%` }}
+                            transition={{ duration: 0.5 }}
+                        />
+                    </div>
+                </div>
 
                 <AnimatePresence mode="wait">
                     {showResult ? (
@@ -156,7 +173,42 @@ export default function GamifiedQuizScreen({ onStartQuiz }) {
                             transition={{ duration: 0.3 }}
                             className="space-y-6"
                         >
-                            {/* Question and options remain same */}
+                            {/* Question */}
+                            <div>
+                                <h2 className="text-xl font-bold mb-4 text-center">
+                                    {questions[current].question}
+                                </h2>
+                            </div>
+
+                            {/* Options */}
+                            <div className="space-y-3">
+                                {questions[current].options.map((option, index) => (
+                                    <motion.button
+                                        key={index}
+                                        onClick={() => setSelected(option)}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        className={`w-full p-4 rounded-xl text-left transition-all duration-200 ${
+                                            selected === option
+                                                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg'
+                                                : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                                selected === option
+                                                    ? 'border-white bg-white'
+                                                    : 'border-gray-400'
+                                            }`}>
+                                                {selected === option && (
+                                                    <CheckCircle className="w-4 h-4 text-purple-600" />
+                                                )}
+                                            </div>
+                                            <span className="font-medium">{option}</span>
+                                        </div>
+                                    </motion.button>
+                                ))}
+                            </div>
 
                             <div className="flex justify-center">
                                 <motion.button
