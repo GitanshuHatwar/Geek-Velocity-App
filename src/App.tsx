@@ -48,6 +48,7 @@ const AppContent = () => {
                 <Route path="/quest-detail" element={<QuestDetailComponent />} />
                 <Route path="/quiz" element={<QuizComponent />} />
                 <Route path="/Edu" element={<EdumonApp />} />
+                <Route path="/login" element={<Login />} />
             </Routes>
         </main>
     );
