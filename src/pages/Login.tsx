@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/commonStyles.css';
 import teacherImg from '../assets/teacher.png';
 import iconImg from '../assets/icon.png';
+
+const API_BASE_URL = 'http://192.168.22.99:5001';
 
 const Login: React.FC = () => {
   const [role, setRole] = useState<'Teacher' | 'Student'>('Teacher');
@@ -11,7 +14,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please enter both email and password.');
@@ -21,7 +24,21 @@ const Login: React.FC = () => {
     if (role === 'Student') {
       navigate('/onboarding');
     } else {
-      navigate('/dashboard');
+      // Teacher login
+      try {
+        const response = await axios.post(`${API_BASE_URL}/teachers/login`, {
+          username: email,
+          password,
+        });
+        if (response.data.success) {
+          navigate('/dashboard');
+        } else {
+          setError(response.data.message || 'Invalid credentials');
+        }
+      } catch (err) {
+        setError('Server error. Please try again later.');
+        console.log(err);
+      }
     }
   };
 
