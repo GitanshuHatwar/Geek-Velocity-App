@@ -18,15 +18,47 @@ import {
   ChevronDown,
   ChevronUp,
   Save,
-  Eye,
-  EyeOff,
   Shield,
   UserPlus,
   GraduationCap,
-  Palette
+  Palette,
+  Video,
+  Image,
+  Play,
+  Edit,
+  Trash2,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { setClassrooms, getClassrooms } from './mockData';
+
+interface MissionContent {
+  id: string;
+  type: 'video' | 'pdf' | 'lecture' | 'image';
+  title: string;
+  description: string;
+  file?: File;
+  url?: string;
+  duration?: string;
+  order: number;
+}
+
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  content: MissionContent[];
+  settings: {
+    isActive: boolean;
+    allowRetakes: boolean;
+    timeLimit: number; // in minutes
+    passingScore: number;
+    showAnswers: boolean;
+    allowDiscussion: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 const CreateClass: React.FC = () => {
   const [className, setClassName] = useState('');
@@ -35,6 +67,22 @@ const CreateClass: React.FC = () => {
   const [description, setDescription] = useState('');
   const [selectedBackground, setSelectedBackground] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Mission creation state
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [currentMission, setCurrentMission] = useState<Mission | null>(null);
+  const [showMissionForm, setShowMissionForm] = useState(false);
+  const [missionTitle, setMissionTitle] = useState('');
+  const [missionDescription, setMissionDescription] = useState('');
+  const [missionContent, setMissionContent] = useState<MissionContent[]>([]);
+  const [missionSettings, setMissionSettings] = useState({
+    isActive: true,
+    allowRetakes: true,
+    timeLimit: 0,
+    passingScore: 70,
+    showAnswers: false,
+    allowDiscussion: true
+  });
   
   // Advanced options state
   const [notifications, setNotifications] = useState(true);
@@ -76,6 +124,84 @@ const CreateClass: React.FC = () => {
     }
   };
 
+  // Mission management functions
+  const handleCreateMission = () => {
+    setCurrentMission(null);
+    setMissionTitle('');
+    setMissionDescription('');
+    setMissionContent([]);
+    setMissionSettings({
+      isActive: true,
+      allowRetakes: true,
+      timeLimit: 0,
+      passingScore: 70,
+      showAnswers: false,
+      allowDiscussion: true
+    });
+    setShowMissionForm(true);
+  };
+
+  const handleEditMission = (mission: Mission) => {
+    setCurrentMission(mission);
+    setMissionTitle(mission.title);
+    setMissionDescription(mission.description);
+    setMissionContent([...mission.content]);
+    setMissionSettings({ ...mission.settings });
+    setShowMissionForm(true);
+  };
+
+  const handleDeleteMission = (missionId: string) => {
+    setMissions(prev => prev.filter(m => m.id !== missionId));
+  };
+
+  const handleSaveMission = () => {
+    if (!missionTitle.trim()) return;
+
+    const missionData: Mission = {
+      id: currentMission?.id || Date.now().toString(),
+      title: missionTitle,
+      description: missionDescription,
+      content: missionContent,
+      settings: missionSettings,
+      createdAt: currentMission?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (currentMission) {
+      setMissions(prev => prev.map(m => m.id === currentMission.id ? missionData : m));
+    } else {
+      setMissions(prev => [...prev, missionData]);
+    }
+
+    setShowMissionForm(false);
+    setCurrentMission(null);
+  };
+
+  const handleAddContent = (type: 'video' | 'pdf' | 'lecture' | 'image') => {
+    const newContent: MissionContent = {
+      id: Date.now().toString(),
+      type,
+      title: '',
+      description: '',
+      order: missionContent.length + 1
+    };
+    setMissionContent(prev => [...prev, newContent]);
+  };
+
+  const handleUpdateContent = (id: string, updates: Partial<MissionContent>) => {
+    setMissionContent(prev => prev.map(content => 
+      content.id === id ? { ...content, ...updates } : content
+    ));
+  };
+
+  const handleRemoveContent = (id: string) => {
+    setMissionContent(prev => prev.filter(content => content.id !== id));
+  };
+
+  const handleFileUpload = (contentId: string, file: File) => {
+    handleUpdateContent(contentId, { file, title: file.name });
+  };
+
   const handleCreateClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!className.trim() || !subject.trim()) return;
@@ -94,7 +220,8 @@ const CreateClass: React.FC = () => {
       academicYear,
       classSchedule,
       classLocation,
-      classTags
+      classTags,
+      missions: missions
     };
     setClassrooms([...classrooms, newClassroom]);
     navigate('/dashboard');
@@ -449,6 +576,75 @@ const CreateClass: React.FC = () => {
                 )}
               </div>
 
+              {/* Mission Management Section */}
+              <div className="form-section">
+                <div className="section-header">
+                  <h3 className="section-title">
+                    <BookOpen size={20} />
+                    Class Missions
+                  </h3>
+                  <button
+                    type="button"
+                    className="create-mission-btn"
+                    onClick={handleCreateMission}
+                  >
+                    <Plus size={16} />
+                    Create Mission
+                  </button>
+                </div>
+                
+                <p className="section-description">
+                  Create engaging missions with videos, PDFs, and lectures for your students to complete.
+                </p>
+
+                {missions.length === 0 ? (
+                  <div className="empty-missions">
+                    <BookOpen size={48} />
+                    <h4>No missions created yet</h4>
+                    <p>Start by creating your first mission to engage your students</p>
+                  </div>
+                ) : (
+                  <div className="missions-list">
+                    {missions.map((mission) => (
+                      <div key={mission.id} className="mission-card">
+                        <div className="mission-header">
+                          <div className="mission-info">
+                            <h4 className="mission-title">{mission.title}</h4>
+                            <p className="mission-description">{mission.description}</p>
+                            <div className="mission-stats">
+                              <span className="stat">
+                                <FileText size={14} />
+                                {mission.content.length} items
+                              </span>
+                              <span className="stat">
+                                <Settings size={14} />
+                                {mission.settings.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mission-actions">
+                            <button
+                              type="button"
+                              className="edit-btn"
+                              onClick={() => handleEditMission(mission)}
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              className="delete-btn"
+                              onClick={() => handleDeleteMission(mission.id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="action-buttons">
                 <button type="button" className="cancel-btn" onClick={() => navigate('/dashboard')}>Cancel</button>
@@ -458,6 +654,285 @@ const CreateClass: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mission Form Modal */}
+      {showMissionForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{currentMission ? 'Edit Mission' : 'Create New Mission'}</h3>
+              <button
+                type="button"
+                className="close-btn"
+                onClick={() => setShowMissionForm(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Mission Title *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Enter mission title"
+                  value={missionTitle}
+                  onChange={(e) => setMissionTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Describe the mission objectives"
+                  value={missionDescription}
+                  onChange={(e) => setMissionDescription(e.target.value)}
+                />
+              </div>
+
+              {/* Content Management */}
+              <div className="content-section">
+                <div className="section-header">
+                  <h4>Mission Content</h4>
+                  <div className="content-type-buttons">
+                    <button
+                      type="button"
+                      className="content-type-btn"
+                      onClick={() => handleAddContent('video')}
+                    >
+                      <Video size={16} />
+                      Video
+                    </button>
+                    <button
+                      type="button"
+                      className="content-type-btn"
+                      onClick={() => handleAddContent('pdf')}
+                    >
+                      <FileText size={16} />
+                      PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="content-type-btn"
+                      onClick={() => handleAddContent('lecture')}
+                    >
+                      <Play size={16} />
+                      Lecture
+                    </button>
+                    <button
+                      type="button"
+                      className="content-type-btn"
+                      onClick={() => handleAddContent('image')}
+                    >
+                      <Image size={16} />
+                      Image
+                    </button>
+                  </div>
+                </div>
+
+                {missionContent.length === 0 ? (
+                  <div className="empty-content">
+                    <p>No content added yet. Click the buttons above to add content.</p>
+                  </div>
+                ) : (
+                  <div className="content-list">
+                    {missionContent.map((content, index) => (
+                      <div key={content.id} className="content-item">
+                        <div className="content-header">
+                          <div className="content-type-icon">
+                            {content.type === 'video' && <Video size={16} />}
+                            {content.type === 'pdf' && <FileText size={16} />}
+                            {content.type === 'lecture' && <Play size={16} />}
+                            {content.type === 'image' && <Image size={16} />}
+                          </div>
+                          <span className="content-order">#{index + 1}</span>
+                          <button
+                            type="button"
+                            className="remove-content-btn"
+                            onClick={() => handleRemoveContent(content.id)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        <div className="content-form">
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Content title"
+                            value={content.title}
+                            onChange={(e) => handleUpdateContent(content.id, { title: e.target.value })}
+                          />
+                          <textarea
+                            className="form-textarea"
+                            placeholder="Content description"
+                            value={content.description}
+                            onChange={(e) => handleUpdateContent(content.id, { description: e.target.value })}
+                          />
+                          
+                          {content.type === 'video' && (
+                            <div className="file-upload">
+                              <label className="upload-label">
+                                <Upload size={16} />
+                                Upload Video File
+                              </label>
+                              <input
+                                type="file"
+                                accept="video/*"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(content.id, e.target.files[0])}
+                                className="file-input"
+                              />
+                            </div>
+                          )}
+
+                          {content.type === 'pdf' && (
+                            <div className="file-upload">
+                              <label className="upload-label">
+                                <Upload size={16} />
+                                Upload PDF File
+                              </label>
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(content.id, e.target.files[0])}
+                                className="file-input"
+                              />
+                            </div>
+                          )}
+
+                          {content.type === 'image' && (
+                            <div className="file-upload">
+                              <label className="upload-label">
+                                <Upload size={16} />
+                                Upload Image File
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleFileUpload(content.id, e.target.files[0])}
+                                className="file-input"
+                              />
+                            </div>
+                          )}
+
+                          {content.type === 'lecture' && (
+                            <input
+                              type="text"
+                              className="form-input"
+                              placeholder="Lecture URL or embed code"
+                              value={content.url || ''}
+                              onChange={(e) => handleUpdateContent(content.id, { url: e.target.value })}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Mission Settings */}
+              <div className="settings-section">
+                <h4>Mission Settings</h4>
+                <div className="settings-grid">
+                  <div className="setting-item">
+                    <label className="setting-label">
+                      <input
+                        type="checkbox"
+                        checked={missionSettings.isActive}
+                        onChange={(e) => setMissionSettings(prev => ({ ...prev, isActive: e.target.checked }))}
+                      />
+                      Active Mission
+                    </label>
+                    <p className="setting-description">Make this mission available to students</p>
+                  </div>
+
+                  <div className="setting-item">
+                    <label className="setting-label">
+                      <input
+                        type="checkbox"
+                        checked={missionSettings.allowRetakes}
+                        onChange={(e) => setMissionSettings(prev => ({ ...prev, allowRetakes: e.target.checked }))}
+                      />
+                      Allow Retakes
+                    </label>
+                    <p className="setting-description">Students can retake this mission</p>
+                  </div>
+
+                  <div className="setting-item">
+                    <label className="setting-label">
+                      <input
+                        type="checkbox"
+                        checked={missionSettings.showAnswers}
+                        onChange={(e) => setMissionSettings(prev => ({ ...prev, showAnswers: e.target.checked }))}
+                      />
+                      Show Answers
+                    </label>
+                    <p className="setting-description">Show correct answers after completion</p>
+                  </div>
+
+                  <div className="setting-item">
+                    <label className="setting-label">
+                      <input
+                        type="checkbox"
+                        checked={missionSettings.allowDiscussion}
+                        onChange={(e) => setMissionSettings(prev => ({ ...prev, allowDiscussion: e.target.checked }))}
+                      />
+                      Allow Discussion
+                    </label>
+                    <p className="setting-description">Enable student discussions for this mission</p>
+                  </div>
+
+                  <div className="setting-item">
+                    <label className="setting-label">Time Limit (minutes)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={missionSettings.timeLimit}
+                      onChange={(e) => setMissionSettings(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                    />
+                    <p className="setting-description">0 = no time limit</p>
+                  </div>
+
+                  <div className="setting-item">
+                    <label className="setting-label">Passing Score (%)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={missionSettings.passingScore}
+                      onChange={(e) => setMissionSettings(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
+                      min="0"
+                      max="100"
+                    />
+                    <p className="setting-description">Minimum score to pass the mission</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => setShowMissionForm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="save-btn"
+                onClick={handleSaveMission}
+              >
+                <Save size={16} />
+                {currentMission ? 'Update Mission' : 'Create Mission'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         * {
@@ -933,6 +1408,432 @@ const CreateClass: React.FC = () => {
 
           .background-grid {
             grid-template-columns: 1fr;
+          }
+        }
+
+        /* Mission Management Styles */
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .create-mission-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          background: #667eea;
+          border: none;
+          border-radius: 0.5rem;
+          color: white;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .create-mission-btn:hover {
+          background: #5a67d8;
+          transform: translateY(-1px);
+        }
+
+        .section-description {
+          color: #6b7280;
+          margin-bottom: 1.5rem;
+        }
+
+        .empty-missions {
+          text-align: center;
+          padding: 3rem 1rem;
+          color: #6b7280;
+        }
+
+        .empty-missions h4 {
+          margin: 1rem 0 0.5rem 0;
+          color: #374151;
+        }
+
+        .missions-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .mission-card {
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          padding: 1.5rem;
+          background: white;
+          transition: all 0.2s;
+        }
+
+        .mission-card:hover {
+          border-color: #667eea;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+        .mission-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        }
+
+        .mission-info {
+          flex: 1;
+        }
+
+        .mission-title {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin: 0 0 0.5rem 0;
+        }
+
+        .mission-description {
+          color: #6b7280;
+          margin: 0 0 1rem 0;
+          font-size: 0.875rem;
+        }
+
+        .mission-stats {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .stat {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.75rem;
+          color: #6b7280;
+          background: #f3f4f6;
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.25rem;
+        }
+
+        .mission-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .edit-btn, .delete-btn {
+          padding: 0.5rem;
+          border: none;
+          border-radius: 0.375rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .edit-btn {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .edit-btn:hover {
+          background: #e5e7eb;
+        }
+
+        .delete-btn {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+
+        .delete-btn:hover {
+          background: #fee2e2;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 1rem;
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 1rem;
+          max-width: 800px;
+          width: 100%;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-header h3 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          color: #6b7280;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 0.375rem;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .modal-body {
+          padding: 1.5rem;
+        }
+
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 1rem;
+          padding: 1.5rem;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .save-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          background: #667eea;
+          border: none;
+          border-radius: 0.5rem;
+          color: white;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .save-btn:hover {
+          background: #5a67d8;
+        }
+
+        /* Content Management Styles */
+        .content-section {
+          margin-top: 2rem;
+          padding-top: 2rem;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .content-section h4 {
+          margin: 0 0 1rem 0;
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .content-type-buttons {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .content-type-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.5rem;
+          color: #374151;
+          cursor: pointer;
+          font-size: 0.875rem;
+          transition: all 0.2s;
+        }
+
+        .content-type-btn:hover {
+          background: #e2e8f0;
+          border-color: #cbd5e1;
+        }
+
+        .empty-content {
+          text-align: center;
+          padding: 2rem;
+          color: #6b7280;
+          background: #f9fafb;
+          border-radius: 0.5rem;
+          border: 2px dashed #d1d5db;
+        }
+
+        .content-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .content-item {
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          padding: 1rem;
+          background: #f9fafb;
+        }
+
+        .content-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .content-type-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 2rem;
+          height: 2rem;
+          background: #667eea;
+          color: white;
+          border-radius: 0.375rem;
+        }
+
+        .content-order {
+          font-size: 0.75rem;
+          color: #6b7280;
+          background: #e5e7eb;
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.25rem;
+        }
+
+        .remove-content-btn {
+          margin-left: auto;
+          background: #fef2f2;
+          border: none;
+          color: #dc2626;
+          padding: 0.25rem;
+          border-radius: 0.25rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .remove-content-btn:hover {
+          background: #fee2e2;
+        }
+
+        .content-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .file-upload {
+          border: 2px dashed #d1d5db;
+          border-radius: 0.5rem;
+          padding: 1.5rem;
+          text-align: center;
+          transition: all 0.2s;
+        }
+
+        .file-upload:hover {
+          border-color: #667eea;
+          background: #f8fafc;
+        }
+
+        .upload-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          color: #6b7280;
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        .file-input {
+          display: none;
+        }
+
+        /* Settings Styles */
+        .settings-section {
+          margin-top: 2rem;
+          padding-top: 2rem;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .settings-section h4 {
+          margin: 0 0 1rem 0;
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .settings-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1rem;
+        }
+
+        .setting-item {
+          padding: 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.5rem;
+          background: #f9fafb;
+        }
+
+        .setting-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 0.5rem;
+        }
+
+        .setting-label input[type="checkbox"] {
+          margin: 0;
+        }
+
+        .setting-description {
+          font-size: 0.875rem;
+          color: #6b7280;
+          margin: 0;
+        }
+
+        @media (max-width: 768px) {
+          .modal-content {
+            margin: 1rem;
+            max-height: calc(100vh - 2rem);
+          }
+
+          .content-type-buttons {
+            flex-direction: column;
+          }
+
+          .content-type-btn {
+            justify-content: center;
+          }
+
+          .settings-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .mission-header {
+            flex-direction: column;
+            gap: 1rem;
+          }
+
+          .mission-actions {
+            align-self: flex-end;
           }
         }
       `}</style>

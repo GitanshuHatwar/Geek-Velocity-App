@@ -1,20 +1,19 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { 
+  Edit3, 
+  Save, 
+  X 
+} from "lucide-react";
 import {
   ChevronLeft,
   ChevronRight,
-  Zap,
-  RotateCcw,
-  Edit3,
-  Check,
-  X,
 } from "lucide-react";
 
 const EdumonApp = () => {
   const [currentPage, setCurrentPage] = useState(0);
-  const [editingName, setEditingName] = useState(null);
+  const [editingName, setEditingName] = useState<number | null>(null);
   const [tempName, setTempName] = useState("");
   const [brainBerries, setBrainBerries] = useState(10000000); // Default 10M brain berries
-  const [showEvolutionAnimation, setShowEvolutionAnimation] = useState(false);
 
   // Edumon data structure - 3 stage evolution system
   const [edumonData, setEdumonData] = useState([
@@ -123,32 +122,24 @@ const EdumonApp = () => {
   ]);
 
   // Evolution costs
-  const getEvolutionCost = (currentStage) => {
-    if (currentStage === 0) return 25000; // Stage 1 to 2
-    if (currentStage === 1) return 50000; // Stage 2 to 3
-    return 0;
+  const getEvolutionCost = (currentStage: number) => {
+    return currentStage * 100;
   };
 
-  const canAffordEvolution = (currentStage) => {
+  const canAffordEvolution = (currentStage: number) => {
     return brainBerries >= getEvolutionCost(currentStage);
   };
 
-  const handleEvolution = (edumonId) => {
+  const handleEvolution = (edumonId: number) => {
     const edumon = edumonData.find((e) => e.id === edumonId);
+    if (!edumon) return;
+    
     const cost = getEvolutionCost(edumon.evolutionStage);
-
     if (
       edumon.evolutionStage < 2 &&
       canAffordEvolution(edumon.evolutionStage)
     ) {
-      // Deduct brain berries
       setBrainBerries((prev) => prev - cost);
-
-      // Show evolution animation
-      setShowEvolutionAnimation(true);
-      setTimeout(() => setShowEvolutionAnimation(false), 3000);
-
-      // Evolve the Edumon
       setEdumonData((prev) =>
         prev.map((e) =>
           e.id === edumonId ? { ...e, evolutionStage: e.evolutionStage + 1 } : e
@@ -157,21 +148,17 @@ const EdumonApp = () => {
     }
   };
 
-  const resetAllEdumon = () => {
-    setEdumonData((prev) =>
-      prev.map((edumon) => ({ ...edumon, evolutionStage: 0 }))
-    );
-  };
-
-  const startEditingName = (edumonId) => {
+  const startEditingName = (edumonId: number) => {
     const edumon = edumonData.find((e) => e.id === edumonId);
+    if (!edumon) return;
+    
     setEditingName(edumonId);
     setTempName(
       edumon.customName || edumon.defaultNames[edumon.evolutionStage]
     );
   };
 
-  const saveCustomName = (edumonId) => {
+  const saveCustomName = (edumonId: number) => {
     setEdumonData((prev) =>
       prev.map((edumon) =>
         edumon.id === edumonId
@@ -209,141 +196,8 @@ const EdumonApp = () => {
     currentEdumon.evolutionStage < 2 &&
     canAffordEvolution(currentEdumon.evolutionStage);
 
-  // Popper-style Celebration Animation Component
-  const PopperCelebration = () => {
-    if (!showEvolutionAnimation) return null;
-
-    const colors = [
-      "#FFD700",
-      "#FF6B6B",
-      "#4ECDC4",
-      "#45B7D1",
-      "#96CEB4",
-      "#FFEAA7",
-      "#DDA0DD",
-      "#98D8C8",
-    ];
-
-    return (
-      <div className="fixed inset-0 pointer-events-none z-50">
-        {/* Ascending particles like Popper */}
-        {[...Array(12)].map((_, i) => {
-          const startX = 20 + Math.random() * 60; // Random horizontal start position
-          const color = colors[i % colors.length];
-
-          return (
-            <div
-              key={`popper-${i}`}
-              className="absolute w-3 h-3 rounded-full"
-              style={{
-                left: `${startX}%`,
-                bottom: "10%",
-                backgroundColor: color,
-                animation: `popperAscend ${
-                  2.5 + Math.random() * 1
-                }s ease-out forwards`,
-                animationDelay: `${Math.random() * 0.8}s`,
-                opacity: 0.8,
-              }}
-            />
-          );
-        })}
-
-        {/* Additional scattered particles */}
-        {[...Array(8)].map((_, i) => {
-          const startX = 30 + Math.random() * 40;
-          const color = colors[(i + 4) % colors.length];
-
-          return (
-            <div
-              key={`scatter-${i}`}
-              className="absolute w-2 h-2 rounded-full"
-              style={{
-                left: `${startX}%`,
-                bottom: "15%",
-                backgroundColor: color,
-                animation: `popperScatter ${
-                  2 + Math.random() * 1
-                }s ease-out forwards`,
-                animationDelay: `${0.3 + Math.random() * 0.5}s`,
-                opacity: 0.6,
-              }}
-            />
-          );
-        })}
-
-        {/* Success message overlay */}
-        <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="bg-gradient-to-r from-emerald-500/90 to-teal-500/90 backdrop-blur-md rounded-2xl px-8 py-4 border border-white/30 shadow-2xl animate-pulse">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">🎉</div>
-              <div>
-                <p className="text-white font-bold text-lg">
-                  Evolution Complete!
-                </p>
-                <p className="text-white/80 text-sm">
-                  Your Edumon has grown stronger
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <style jsx>{`
-          @keyframes popperAscend {
-            0% {
-              transform: translateY(0px) translateX(0px) scale(1);
-              opacity: 0.8;
-            }
-            50% {
-              transform: translateY(-150px)
-                translateX(${Math.random() * 60 - 30}px) scale(0.8);
-              opacity: 0.6;
-            }
-            100% {
-              transform: translateY(-300px)
-                translateX(${Math.random() * 80 - 40}px) scale(0.3);
-              opacity: 0;
-            }
-          }
-
-          @keyframes popperScatter {
-            0% {
-              transform: translateY(0px) translateX(0px) scale(1) rotate(0deg);
-              opacity: 0.6;
-            }
-            100% {
-              transform: translateY(-200px)
-                translateX(${Math.random() * 100 - 50}px) scale(0.2)
-                rotate(360deg);
-              opacity: 0;
-            }
-          }
-        `}</style>
-      </div>
-    );
-  };
-
-  // Subtle Sparkle Animation Component for card
-  const CardSparkle = () => {
-    if (!showEvolutionAnimation) return null;
-
-    return (
-      <div className="absolute -top-1 -right-1 pointer-events-none">
-        <div
-          className="w-6 h-6 text-yellow-300 opacity-70 animate-pulse"
-          style={{ animationDuration: "1.5s" }}
-        >
-          ✨
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <PopperCelebration />
-
       {/* Brain Berries Bar - Top Right */}
       <div className="fixed top-6 right-6 z-40">
         <div className="bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl px-6 py-3 border border-orange-400/30 backdrop-blur-md shadow-xl">
@@ -383,9 +237,7 @@ const EdumonApp = () => {
       {/* Main Edumon Card */}
       <div className="max-w-lg mx-auto">
         <div
-          className={`bg-gradient-to-br ${currentBgColor} rounded-3xl shadow-2xl border border-white/20 backdrop-blur-sm p-8 transform transition-all duration-500 hover:scale-105 ${
-            showEvolutionAnimation ? "ring-4 ring-yellow-300/50" : ""
-          }`}
+          className={`bg-gradient-to-br ${currentBgColor} rounded-3xl shadow-2xl border border-white/20 backdrop-blur-sm p-8 transform transition-all duration-500 hover:scale-105`}
         >
           {/* Edumon Name Section */}
           <div className="text-center mb-8">
@@ -404,7 +256,7 @@ const EdumonApp = () => {
                     onClick={() => saveCustomName(currentEdumon.id)}
                     className="bg-green-500/80 hover:bg-green-500 text-white p-2 rounded-lg transition-all duration-200"
                   >
-                    <Check size={20} />
+                    <Save size={20} />
                   </button>
                   <button
                     onClick={cancelEditingName}
@@ -458,7 +310,6 @@ const EdumonApp = () => {
                   alt={currentName}
                   className="w-52 h-52 object-cover rounded-2xl shadow-2xl transition-all duration-500"
                 />
-                <CardSparkle />
                 {currentEdumon.evolutionStage === 2 && (
                   <div className="absolute -top-3 -right-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-3 animate-pulse shadow-xl">
                     <span className="text-xl">👑</span>
@@ -543,7 +394,6 @@ const EdumonApp = () => {
                     : "bg-gray-500/20 border border-gray-500/30 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                <Zap size={20} />
                 Evolve
               </button>
             </div>

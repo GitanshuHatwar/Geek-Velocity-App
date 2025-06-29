@@ -2,7 +2,23 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import gsap from 'gsap'
 import { X, Lock, Star, Zap, Crown, Flame } from 'lucide-react'
-import GameHeader from '../Header'
+
+
+// Type definitions
+type Difficulty = 'Novice' | 'Adept' | 'Expert' | 'Master' | 'Legend' | 'Mythic';
+
+interface Quest {
+  id: number;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  x: number;
+  y: number;
+  constellation: string;
+  difficulty: Difficulty;
+  rewards: string[];
+  estimatedTime: string;
+}
 
 // Mock backend data - replace with your actual API call
 const useQuestsData = () => {
@@ -82,8 +98,8 @@ const useQuestsData = () => {
     ])
 
     // Simulate adding new quests from backend
-    const addQuest = useCallback((newQuest) => {
-        setQuests(prev => [...prev, { ...newQuest, id: prev.length + 1 }])
+    const addQuest = useCallback((newQuest: Partial<Quest>) => {
+        setQuests(prev => [...prev, { ...newQuest, id: prev.length + 1 } as Quest])
     }, [])
 
     return { quests, addQuest }
@@ -122,7 +138,13 @@ const StarField = React.memo(() => {
     )
 })
 
-const QuestOrb = React.memo(({ quest, onClick, index }) => {
+interface QuestOrbProps {
+    quest: Quest;
+    onClick: (quest: Quest) => void;
+    index: number;
+}
+
+const QuestOrb = React.memo(({ quest, onClick, index }: QuestOrbProps) => {
     const orbRef = useRef<HTMLDivElement>(null)
     const glowRef = useRef<HTMLDivElement>(null)
 
@@ -165,7 +187,7 @@ const QuestOrb = React.memo(({ quest, onClick, index }) => {
         }
     }), [])
 
-    const config = difficultyConfig[quest.difficulty]
+    const config = difficultyConfig[quest.difficulty as Difficulty]
     const IconComponent = config.icon
 
     useEffect(() => {
@@ -202,7 +224,7 @@ const QuestOrb = React.memo(({ quest, onClick, index }) => {
             gsap.to(orb, {
                 scale: 1.1,
                 duration: 0.3,
-                ease: "back.out(1.7)"
+                ease: "power2.out"
             })
         }
 
@@ -210,7 +232,7 @@ const QuestOrb = React.memo(({ quest, onClick, index }) => {
             gsap.to(orb, {
                 scale: 1,
                 duration: 0.3,
-                ease: "back.out(1.7)"
+                ease: "power2.out"
             })
         }
 
@@ -389,7 +411,7 @@ export default function OptimizedCosmicMap() {
     const { quests, addQuest } = useQuestsData()
     const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null)
     const [scale, setScale] = useState(1)
-    const containerRef = useRef(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     // Optimized wheel handler
     const handleWheel = useCallback((e: WheelEvent) => {
